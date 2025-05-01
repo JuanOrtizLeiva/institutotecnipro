@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Instituto Tecnipro</title>
+    <style>
+        /* --- Estilos CSS Mejorados --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif; /* Fuente profesional común */
+            background-color: #f0f2f5; /* Fondo suave */
+            display: flex;
+            justify-content: center; /* Centra el chat si el body es más grande */
+            align-items: center;
+            min-height: 100vh; /* Ocupa al menos el alto de la ventana */
+        }
+
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 400px; /* Ancho máximo para una columna de chat típica */
+            height: 80vh; /* Altura relativa */
+            max-height: 500px; /* Altura máxima */
+            border: 1px solid #dcdcdc; /* Borde sutil */
+            border-radius: 12px; /* Bordes más redondeados */
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
+            background-color: #ffffff; /* Fondo blanco */
+        }
+
+        #chat-header {
+            background-color: #0056b3; /* Azul oscuro, similar a un color corporativo */
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+
+        #chat-output {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #e9ebee; /* Fondo ligeramente gris para el área de mensajes */
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            display: flex; /* Usar flexbox para manejar los mensajes */
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 18px; /* Bordes más redondeados para burbujas */
+            max-width: 80%; /* Ancho máximo de la burbuja */
+            line-height: 1.4;
+            position: relative; /* Necesario para las puntas si se añaden */
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            align-self: flex-end; /* Alinea la burbuja a la derecha */
+            background-color: #007bff; /* Azul para mensajes del usuario */
+            color: white;
+            /* Opcional: añadir una pequeña punta */
+            /* &::before { content: ''; position: absolute; top: 10px; right: -8px; border: 8px solid transparent; border-left-color: #007bff; } */
+        }
+
+        .ai-message {
+            align-self: flex-start; /* Alinea la burbuja a la izquierda */
+            background-color: #f0f0f0; /* Gris claro para mensajes del AI */
+            color: #333;
+            /* Opcional: añadir una pequeña punta */
+            /* &::before { content: ''; position: absolute; top: 10px; left: -8px; border: 8px solid transparent; border-right-color: #f0f0f0; } */
+        }
+         .message strong { /* Estilo para la etiqueta [Tú] o [Asistente] */
+             font-weight: bold;
+             margin-right: 5px;
+         }
+
+
+        #loading-container {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: #666;
+            background-color: #f0f0f0;
+            display: none; /* Inicialmente oculto */
+            border-top: 1px solid #eee;
+        }
+
+         #loading-text {
+             margin: 5px 0;
+         }
+
+        #chat-input-area {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #dcdcdc;
+            background-color: #fff;
+            align-items: center;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px; /* Bordes más redondeados */
+            margin-right: 10px;
+            font-size: 1em;
+            outline: none; /* Quita el borde de enfoque por defecto */
+             transition: border-color 0.3s ease;
+        }
+        #user-input:focus {
+             border-color: #007bff; /* Resalta el borde al enfocar */
+        }
+
+
+        #send-button {
+            padding: 10px 20px; /* Más padding para un botón más grande */
+            background-color: #28a745; /* Verde para enviar */
+            color: white;
+            border: none;
+            border-radius: 20px; /* Bordes más redondeados */
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        #send-button:hover {
+            background-color: #218838; /* Verde más oscuro al pasar el mouse */
+        }
+
+        #send-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">Instituto Tecnipro Asesor</div>
+        <div id="chat-output">
+            <div class="message ai-message"><strong>Asesor:</strong> ¡Hola! Soy tu asesor experto de Instituto Tecnipro. Pregúntame sobre nuestras capacitaciones B2B en Chile.</div>
+        </div>
+        <div id="loading-container">
+            <div id="loading-text">Escribiendo...</div>
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje...">
+            <button id="send-button">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript para manejar la lógica del chat
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const chatOutput = document.getElementById('chat-output');
+        const loadingContainer = document.getElementById('loading-container'); // Contenedor del indicador
+        const loadingText = document.getElementById('loading-text'); // Texto del indicador
+
+        // --- URL de tu Flujo de Power Automate ---
+        // ¡Pega aquí la URL HTTP POST que copiaste de Power Automate en la Etapa 1.2!
+        const POWER_AUTOMATE_FLOW_URL = 'Pega_Tu_URL_de_Power_Automate_Aquí'; // <--- ¡CAMBIA ESTO por tu URL real!
+
+        // --- Frases para el indicador de "pensando" ---
+        const thinkingMessages = [
+            "Sabías que capacitamos a más de 5000 personas en Chile.",
+            "Sabías que tenemos más de 10 años de experiencia en capacitación B2B.",
+            "Sabías que nuestros cursos tienen cobertura Sence.",
+            "Sabías que diseñamos cursos a medida desde 8 horas.",
+            "Sabías que trabajamos con empresas líderes en Chile.",
+            "Sabías que ofrecemos modalidades sincrónica, asincrónica y presencial.",
+            "Pensando en la mejor respuesta para tu empresa..."
+            // Puedes añadir más frases aquí relacionadas con tus servicios
+        ];
+
+        // Función para agregar un mensaje al área de chat
+        function addMessage(sender, text) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            if (sender === 'user') {
+                messageElement.classList.add('user-message');
+                messageElement.innerHTML = `<strong>Tú:</strong> ${escapeHTML(text)}`; // Usamos innerHTML con escape para negrita
+            } else { // sender === 'ai'
+                messageElement.classList.add('ai-message');
+                 messageElement.innerHTML = `<strong>Asesor:</strong> ${escapeHTML(text)}`; // Usamos innerHTML con escape para negrita
+            }
+            chatOutput.appendChild(messageElement);
+
+            // Hacer scroll automático hacia el último mensaje
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+        }
+
+         // Función simple para escapar HTML y evitar inyecciones
+         function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+
+        // Función asincrónica para enviar el mensaje y recibir la respuesta
+        async function sendMessage() {
+            const userMessage = userInput.value.trim();
+
+            if (!userMessage) {
+                return;
+            }
+
+            // --- 1. Mostrar el mensaje del usuario ---
+            addMessage('user', userMessage);
+
+            // --- 2. Preparar la interfaz para esperar la respuesta ---
+            userInput.value = '';
+            sendButton.disabled = true;
+            // Mostrar indicador de carga con una frase aleatoria
+            const randomMessage = thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)];
+            loadingText.textContent = randomMessage;
+            loadingContainer.style.display = 'block';
+
+
+            try {
+                // --- 3. Enviar el mensaje a Power Automate ---
+                const requestBody = {
+                    message: userMessage
+                };
+
+                const response = await fetch(POWER_AUTOMATE_FLOW_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                // --- 4. Procesar la respuesta de Power Automate ---
+                if (response.ok) {
+                    const aiResponseText = await response.text();
+                    // --- 5. Mostrar la respuesta del AI ---
+                    addMessage('ai', aiResponseText);
+                } else {
+                    console.error("Error al recibir respuesta de Power Automate:", response.status, response.statusText);
+                    const errorBody = await response.text().catch(e => "Error desconocido");
+                    console.error("Cuerpo de error:", errorBody);
+                    addMessage('ai', `Disculpa, hubo un problema al contactar al asistente (${response.status}). Por favor, inténtalo de nuevo.`);
+                }
+
+            } catch (error) {
+                // --- 6. Manejar errores de red u otros ---
+                console.error("Error en la llamada fetch:", error);
+                addMessage('ai', "Ocurrió un error de comunicación. Verifica tu conexión.");
+            } finally {
+                // --- 7. Restablecer la interfaz ---
+                loadingContainer.style.display = 'none'; // Oculta el indicador de carga
+                sendButton.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        // --- Asignar Eventos ---
+        sendButton.addEventListener('click', sendMessage);
+
+        userInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Establecer el foco en el input al cargar la página (opcional, puede fallar en algunos navegadores por permisos)
+         window.addEventListener('load', () => {
+             userInput.focus();
+         });
+
+
+    </script>
+</body>
+</html>
