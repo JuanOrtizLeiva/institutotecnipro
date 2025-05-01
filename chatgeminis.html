@@ -3,210 +3,374 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Instituto Tecnipro</title>
+    <title>Asesor Virtual Instituto Tecnipro</title>
+    <!-- Añadimos Font Awesome para iconos profesionales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- Estilos CSS Mejorados --- */
-        body {
+        /* --- Estilos Profesionales Mejorados --- */
+        :root {
+            --primary-color: #0056b3;
+            --primary-color-hover: #004494;
+            --accent-color: #28a745;
+            --accent-color-hover: #218838;
+            --light-bg: #f8f9fa;
+            --chat-bg: #e9ebee;
+            --user-bubble: #0072ce;
+            --ai-bubble: #f0f0f0;
+            --text-dark: #333333;
+            --text-light: #ffffff;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Arial', sans-serif; /* Fuente profesional común */
-            background-color: #f0f2f5; /* Fondo suave */
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            line-height: 1.5;
             display: flex;
-            justify-content: center; /* Centra el chat si el body es más grande */
+            justify-content: center;
             align-items: center;
-            min-height: 100vh; /* Ocupa al menos el alto de la ventana */
+            min-height: 100vh;
+            padding: 20px;
         }
 
         #chat-container {
             display: flex;
             flex-direction: column;
             width: 100%;
-            max-width: 400px; /* Ancho máximo para una columna de chat típica */
-            height: 80vh; /* Altura relativa */
-            max-height: 500px; /* Altura máxima */
-            border: 1px solid #dcdcdc; /* Borde sutil */
-            border-radius: 12px; /* Bordes más redondeados */
+            max-width: 800px; /* Aumentamos el ancho máximo para Wix */
+            height: 600px; /* Altura fija para mejor visualización */
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
-            background-color: #ffffff; /* Fondo blanco */
+            box-shadow: var(--shadow);
+            background-color: #ffffff;
+            position: relative; /* Para posicionar elementos absolutos */
         }
 
         #chat-header {
-            background-color: #0056b3; /* Azul oscuro, similar a un color corporativo */
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 1.1em;
-            font-weight: bold;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            padding: 18px 25px;
+            font-size: 1.2em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--primary-color-hover);
+        }
+
+        #chat-header i {
+            margin-right: 12px;
+            font-size: 1.4em;
         }
 
         #chat-output {
             flex-grow: 1;
-            padding: 15px;
+            padding: 20px;
             overflow-y: auto;
-            background-color: #e9ebee; /* Fondo ligeramente gris para el área de mensajes */
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            display: flex; /* Usar flexbox para manejar los mensajes */
+            background-color: var(--chat-bg);
+            display: flex;
             flex-direction: column;
+            scroll-behavior: smooth;
         }
 
         .message {
-            margin-bottom: 12px;
-            padding: 10px 15px;
-            border-radius: 18px; /* Bordes más redondeados para burbujas */
-            max-width: 80%; /* Ancho máximo de la burbuja */
-            line-height: 1.4;
-            position: relative; /* Necesario para las puntas si se añaden */
+            margin-bottom: 16px;
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            max-width: 80%;
+            line-height: 1.5;
+            position: relative;
             word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .user-message {
-            align-self: flex-end; /* Alinea la burbuja a la derecha */
-            background-color: #007bff; /* Azul para mensajes del usuario */
-            color: white;
-            /* Opcional: añadir una pequeña punta */
-            /* &::before { content: ''; position: absolute; top: 10px; right: -8px; border: 8px solid transparent; border-left-color: #007bff; } */
+            align-self: flex-end;
+            background-color: var(--user-bubble);
+            color: var(--text-light);
+            border-bottom-right-radius: 4px;
         }
 
         .ai-message {
-            align-self: flex-start; /* Alinea la burbuja a la izquierda */
-            background-color: #f0f0f0; /* Gris claro para mensajes del AI */
-            color: #333;
-            /* Opcional: añadir una pequeña punta */
-            /* &::before { content: ''; position: absolute; top: 10px; left: -8px; border: 8px solid transparent; border-right-color: #f0f0f0; } */
+            align-self: flex-start;
+            background-color: var(--ai-bubble);
+            color: var(--text-dark);
+            border-bottom-left-radius: 4px;
         }
-         .message strong { /* Estilo para la etiqueta [Tú] o [Asistente] */
-             font-weight: bold;
-             margin-right: 5px;
-         }
 
+        .message strong {
+            font-weight: 600;
+            margin-right: 8px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
 
         #loading-container {
-            text-align: center;
-            padding: 10px;
-            font-style: italic;
-            color: #666;
-            background-color: #f0f0f0;
-            display: none; /* Inicialmente oculto */
-            border-top: 1px solid #eee;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid var(--border-color);
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
 
-         #loading-text {
-             margin: 5px 0;
-         }
+        #loading-animation {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        #loading-text {
+            font-style: italic;
+            color: var(--text-dark);
+            font-size: 0.95em;
+        }
 
         #chat-input-area {
             display: flex;
-            padding: 10px;
-            border-top: 1px solid #dcdcdc;
-            background-color: #fff;
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            background-color: white;
             align-items: center;
+            position: relative;
         }
 
         #user-input {
             flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 20px; /* Bordes más redondeados */
-            margin-right: 10px;
+            padding: 14px 18px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             font-size: 1em;
-            outline: none; /* Quita el borde de enfoque por defecto */
-             transition: border-color 0.3s ease;
-        }
-        #user-input:focus {
-             border-color: #007bff; /* Resalta el borde al enfocar */
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
+        #user-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
+        }
 
         #send-button {
-            padding: 10px 20px; /* Más padding para un botón más grande */
-            background-color: #28a745; /* Verde para enviar */
+            padding: 14px 24px;
+            margin-left: 12px;
+            background-color: var(--accent-color);
             color: white;
             border: none;
-            border-radius: 20px; /* Bordes más redondeados */
+            border-radius: var(--radius-lg);
             cursor: pointer;
             font-size: 1em;
-            transition: background-color 0.3s ease;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #send-button i {
+            margin-left: 8px;
         }
 
         #send-button:hover {
-            background-color: #218838; /* Verde más oscuro al pasar el mouse */
+            background-color: var(--accent-color-hover);
+            transform: translateY(-1px);
+        }
+
+        #send-button:active {
+            transform: translateY(0px);
         }
 
         #send-button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Responsividad mejorada */
+        @media (max-width: 768px) {
+            #chat-container {
+                height: 90vh;
+                max-height: none;
+                border-radius: var(--radius-md);
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            #send-button {
+                padding: 14px 18px;
+            }
+
+            #send-button span {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #chat-container {
+                height: calc(100vh - 40px);
+                border-radius: var(--radius-sm);
+            }
+
+            .message {
+                max-width: 90%;
+                padding: 12px 16px;
+            }
+
+            #chat-header {
+                padding: 14px 20px;
+                font-size: 1.1em;
+            }
+
+            #user-input {
+                padding: 12px 16px;
+            }
+        }
+
+        /* Adaptación para incrustación en Wix */
+        .wix-embed {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
         }
     </style>
 </head>
 <body>
-    <div id="chat-container">
-        <div id="chat-header">Instituto Tecnipro Asesor4</div>
+    <div id="chat-container" class="wix-embed">
+        <div id="chat-header">
+            <i class="fas fa-headset"></i>
+            Asistente de Capacitación | Instituto Tecnipro
+        </div>
         <div id="chat-output">
-            <div class="message ai-message"><strong>Asesor:</strong> ¡Hola! Soy tu asesor experto de Instituto Tecnipro. Pregúntame sobre nuestras capacitaciones B2B en Chile.</div>
+            <div class="message ai-message"><strong>Asesor:</strong> ¡Hola! Soy el asistente de capacitación de Instituto Tecnipro. Puedo ayudarte a encontrar la mejor solución de formación para tu empresa. ¿En qué área específica necesitas capacitar a tu equipo?</div>
         </div>
         <div id="loading-container">
-            <div id="loading-text">Escribiendo...</div>
+            <div id="loading-animation">
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+            <div id="loading-text">Preparando información para ti...</div>
         </div>
         <div id="chat-input-area">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje...">
-            <button id="send-button">Enviar</button>
+            <input type="text" id="user-input" placeholder="Escribe tu consulta sobre capacitaciones...">
+            <button id="send-button">
+                <span>Enviar</span>
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
     </div>
 
     <script>
-        // JavaScript para manejar la lógica del chat
+        // JavaScript para la lógica del chat
         const userInput = document.getElementById('user-input');
         const sendButton = document.getElementById('send-button');
         const chatOutput = document.getElementById('chat-output');
-        const loadingContainer = document.getElementById('loading-container'); // Contenedor del indicador
-        const loadingText = document.getElementById('loading-text'); // Texto del indicador
+        const loadingContainer = document.getElementById('loading-container');
+        const loadingText = document.getElementById('loading-text');
 
-        // --- URL de tu Flujo de Power Automate ---
-        // ¡Esta URL ya está pegada aquí para evitar errores!
+        // URL del flujo de Power Automate
         const POWER_AUTOMATE_FLOW_URL = 'https://prod-48.westus.logic.azure.com:443/workflows/422eff426bf446beb5e4779f6da59075/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jywG9ryTgzuN1LxQrRY0r87j6Wioqjtug5bNnqLbQT8';
 
-        // --- Frases para el indicador de "pensando" ---
+        // Mensajes informativos durante la espera - orientados a encargados de capacitación
         const thinkingMessages = [
-            "Sabías que capacitamos a más de 5000 personas en Chile.",
-            "Sabías que tenemos más de 10 años de experiencia en capacitación B2B.",
-            "Sabías que nuestros cursos tienen cobertura Sence.",
-            "Sabías que diseñamos cursos a medida desde 8 horas.",
-            "Sabías que trabajamos con empresas líderes en Chile.",
-            "Sabías que ofrecemos modalidades sincrónica, asincrónica y presencial.",
-            "Pensando en la mejor respuesta para tu empresa..."
-            // Puedes añadir más frases aquí relacionadas con tus servicios
+            "¿Sabías que nuestras capacitaciones incluyen certificación y respaldo académico?",
+            "Contamos con más de 10 años formando profesionales en las principales empresas de Chile",
+            "Todas nuestras capacitaciones pueden ser bonificadas por SENCE",
+            "Diseñamos programas personalizados según las necesidades específicas de tu empresa",
+            "Nuestros relatores son profesionales con amplia experiencia en el sector empresarial",
+            "Ofrecemos modalidades presenciales, online en vivo y cursos asincrónicos a tu medida",
+            "Podemos adaptar nuestros contenidos a los procesos específicos de tu organización",
+            "Nuestras capacitaciones incluyen evaluaciones y reportes de desempeño detallados",
+            "La duración de nuestros programas va desde 8 horas hasta diplomados completos",
+            "Te asesoramos en todo el proceso administrativo con SENCE y OTIC"
         ];
 
-        // Función para agregar un mensaje al área de chat
+        // Función para añadir un mensaje al chat
         function addMessage(sender, text) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message');
+            
             if (sender === 'user') {
                 messageElement.classList.add('user-message');
-                messageElement.innerHTML = `<strong>Tú:</strong> ${escapeHTML(text)}`; // Usamos innerHTML con escape para negrita
-            } else { // sender === 'ai'
+                messageElement.innerHTML = `<strong>Tú:</strong> ${escapeHTML(text)}`;
+            } else {
                 messageElement.classList.add('ai-message');
-                 messageElement.innerHTML = `<strong>Asesor:</strong> ${escapeHTML(text)}`; // Usamos innerHTML con escape para negrita
+                messageElement.innerHTML = `<strong>Asesor:</strong> ${escapeHTML(text)}`;
             }
+            
             chatOutput.appendChild(messageElement);
-
-            // Hacer scroll automático hacia el último mensaje
             chatOutput.scrollTop = chatOutput.scrollHeight;
         }
 
-         // Función simple para escapar HTML y evitar inyecciones
-         function escapeHTML(str) {
+        // Función para escapar HTML y prevenir inyecciones
+        function escapeHTML(str) {
             const div = document.createElement('div');
             div.appendChild(document.createTextNode(str));
             return div.innerHTML;
         }
 
+        // Función para mostrar mensajes informativos rotativos durante la carga
+        let tipInterval;
+        function startRotatingTips() {
+            let tipIndex = Math.floor(Math.random() * thinkingMessages.length);
+            loadingText.textContent = thinkingMessages[tipIndex];
+            
+            tipInterval = setInterval(() => {
+                tipIndex = (tipIndex + 1) % thinkingMessages.length;
+                loadingText.textContent = thinkingMessages[tipIndex];
+            }, 5000);
+        }
 
-        // Función asincrónica para enviar el mensaje y recibir la respuesta
+        function stopRotatingTips() {
+            clearInterval(tipInterval);
+        }
+
+        // Función para enviar el mensaje
         async function sendMessage() {
             const userMessage = userInput.value.trim();
 
@@ -214,116 +378,98 @@
                 return;
             }
 
-            // --- 1. Mostrar el mensaje del usuario ---
+            // Mostrar el mensaje del usuario
             addMessage('user', userMessage);
 
-            // --- 2. Preparar la interfaz para esperar la respuesta ---
+            // Preparar la interfaz para esperar la respuesta
             userInput.value = '';
             sendButton.disabled = true;
-
-            // Mostrar indicador de carga con una frase aleatoria
-            const randomMessage = thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)];
-            loadingText.textContent = randomMessage;
-            loadingContainer.style.display = 'block';
-
+            
+            // Mostrar animación de carga con mensajes informativos rotativos
+            loadingContainer.style.display = 'flex';
+            startRotatingTips();
 
             try {
-                // --- 3. Enviar el mensaje a Power Automate con la URL COMPLETA ---
+                // Enviar el mensaje a Power Automate
                 const requestBody = {
                     message: userMessage
                 };
 
                 console.log("Enviando solicitud a:", POWER_AUTOMATE_FLOW_URL);
-
+                
                 const response = await fetch(POWER_AUTOMATE_FLOW_URL, {
-                    method: 'POST', // Debe ser POST
+                    method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json' // Indica que el cuerpo es JSON
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(requestBody) // Convierte el objeto JS a JSON
+                    body: JSON.stringify(requestBody)
                 });
 
                 console.log("Respuesta recibida. Status:", response.status);
-
-                // --- 4. Procesar la respuesta de Power Automate ---
-                // Verifica si la respuesta HTTP fue exitosa (código 2xx)
+                
+                // Procesar la respuesta
                 if (response.ok) {
-                    // Power Automate devolvió solo texto plano, así que leemos como texto
-                    const aiResponseText = await response.text();
-
-                    // --- 5. Mostrar la respuesta del AI ---
-                    addMessage('ai', aiResponseText);
-
-                } else {
-                    // Si la respuesta de Power Automate no fue exitosa (ej: error 400, 500)
-                    console.error("Error HTTP:", response.status, response.statusText);
-
-                    // Intentar leer el cuerpo del error para depuración
-                    let errorText = "";
+                    let aiResponseText;
+                    
+                    // Intentar procesar como JSON primero
                     try {
-                        errorText = await response.text();
-                        console.error("Cuerpo del error:", errorText);
+                        const jsonResponse = await response.json();
+                        console.log("Respuesta JSON:", jsonResponse);
+                        
+                        // Extraer el mensaje del JSON si existe
+                        if (typeof jsonResponse === 'object') {
+                            aiResponseText = jsonResponse.message || jsonResponse.response || jsonResponse.text || JSON.stringify(jsonResponse);
+                        } else {
+                            aiResponseText = String(jsonResponse);
+                        }
                     } catch (e) {
-                        console.error("No se pudo leer el cuerpo del error:", e);
+                        // Si no es JSON, tratar como texto
+                        aiResponseText = await response.text();
+                        console.log("Respuesta texto:", aiResponseText);
                     }
-
-                    // Mensajes de error específicos (mantenemos esta lógica útil)
+                    
+                    // Mostrar la respuesta del asesor
+                    addMessage('ai', aiResponseText);
+                } else {
+                    // Manejar errores HTTP
+                    console.error("Error HTTP:", response.status, response.statusText);
+                    
                     let errorMessage;
                     switch(response.status) {
                         case 401:
-                             // Aunque el flujo corrió, este 401 vendría de Power Automate si falló ANTES de llamar a Google,
-                             // o si configuraste la Respuesta con status 401 manualmente en Power Automate por alguna razón.
-                             // Si el flujo SÍ corrió y llegó a Respuesta con 200, no deberías ver este mensaje.
-                             // Si lo ves con status 401 AHORA, habría que ver el historial de PA para ese run exacto que dio 401 al fetch.
-                            errorMessage = `Error de autenticación del servicio (${response.status}).`; // Mensaje simplificado ahora que el flujo corre
+                            errorMessage = "Lo sentimos, hubo un problema de autenticación con nuestro servicio.";
                             break;
                         case 403:
-                            errorMessage = `Permiso denegado por el servicio (${response.status}).`;
+                            errorMessage = "No se tiene permiso para acceder a este servicio.";
                             break;
                         case 404:
-                            errorMessage = `Servicio no encontrado (${response.status}). Verifica la URL del flujo.`;
+                            errorMessage = "No se encontró el servicio. Por favor, intente más tarde.";
                             break;
                         case 429:
-                            errorMessage = `Demasiadas solicitudes (${response.status}). Intenta más tarde.`;
+                            errorMessage = "Estamos experimentando un alto volumen de consultas. Por favor, intente nuevamente en unos momentos.";
                             break;
                         case 500: case 502: case 503: case 504:
-                            errorMessage = `Error interno del servicio (${response.status}). Intenta más tarde.`
+                            errorMessage = "Nuestro servicio está experimentando dificultades técnicas. Por favor, intente más tarde o contáctenos directamente.";
                             break;
                         default:
-                            // Si el flujo en Power Automate fue "Succeeded" pero respondió con un status no-2xx,
-                            // el error podría estar en la lógica de tu flujo que decide responder con error.
-                            errorMessage = `Error inesperado del servicio (${response.status}).`;
-                     }
-
-                    // Si el cuerpo del error es un JSON, intenta leerlo y mostrar un mensaje más útil
-                    let detailedErrorMessage = errorMessage;
-                     if (errorText) {
-                         try {
-                              const errorJson = JSON.parse(errorText);
-                              // Busca un mensaje de error común en JSONs de error (varía según la API)
-                              detailedErrorMessage = errorJson.message || errorJson.error?.message || JSON.stringify(errorJson);
-                         } catch(e) {
-                              // Si no es JSON, simplemente usa el texto crudo o el mensaje por defecto
-                              detailedErrorMessage = `${errorMessage} Detalles: ${errorText.substring(0, 150)}${errorText.length > 150 ? '...' : ''}`;
-                         }
-                     }
-
-                    addMessage('ai', detailedErrorMessage);
-
+                            errorMessage = "Hubo un problema al procesar su solicitud. Por favor, intente nuevamente.";
+                    }
+                    
+                    addMessage('ai', errorMessage);
                 }
             } catch (error) {
-                // --- 6. Manejar errores de red u otros ---
                 console.error("Error en la conexión:", error);
-                addMessage('ai', "Ocurrió un error de conexión. Verifica tu conexión a internet."); // Mantenemos el mensaje genérico para errores de red pura
+                addMessage('ai', "Lo sentimos, no pudimos conectar con nuestro servicio. Verifique su conexión a internet o contáctenos directamente por teléfono.");
             } finally {
-                // --- 7. Restablecer la interfaz ---
-                loadingContainer.style.display = 'none'; // Oculta el indicador de carga
+                // Restablecer la interfaz
+                stopRotatingTips();
+                loadingContainer.style.display = 'none';
                 sendButton.disabled = false;
-                 userInput.focus();
+                userInput.focus();
             }
         }
 
-        // --- Asignar Eventos ---
+        // Eventos
         sendButton.addEventListener('click', sendMessage);
 
         userInput.addEventListener('keypress', function(event) {
@@ -333,12 +479,10 @@
             }
         });
 
-        // Establecer el foco en el input al cargar la página
-         window.addEventListener('load', () => {
-             userInput.focus();
-         });
-
-
+        // Inicialización
+        window.addEventListener('load', () => {
+            userInput.focus();
+        });
     </script>
 </body>
 </html>
