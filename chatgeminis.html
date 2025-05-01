@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Instituto Tecnipro</title>
     <style>
-        /* --- Estilos CSS Mejorados --- */
+        /* --- Estilos CSS se mantienen igual --- */
         body {
             margin: 0;
             padding: 0;
@@ -136,26 +136,11 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
-
-        #debug-info {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            max-width: 300px;
-            max-height: 200px;
-            overflow: auto;
-            display: none;
-        }
     </style>
 </head>
 <body>
     <div id="chat-container">
-        <div id="chat-header">Instituto Tecnipro Asesor2</div>
+        <div id="chat-header">Instituto Tecnipro Asesor3</div>
         <div id="chat-output">
             <div class="message ai-message"><strong>Asesor:</strong> ¡Hola! Soy tu asesor experto de Instituto Tecnipro. Pregúntame sobre nuestras capacitaciones B2B en Chile.</div>
         </div>
@@ -167,9 +152,6 @@
             <button id="send-button">Enviar</button>
         </div>
     </div>
-    
-    <!-- Panel de depuración (oculto por defecto) -->
-    <div id="debug-info"></div>
 
     <script>
         // JavaScript para manejar la lógica del chat
@@ -178,15 +160,11 @@
         const chatOutput = document.getElementById('chat-output');
         const loadingContainer = document.getElementById('loading-container');
         const loadingText = document.getElementById('loading-text');
-        const debugInfo = document.getElementById('debug-info');
-        
-        // URL exacta del flujo de Power Automate
-        const POWER_AUTOMATE_FLOW_URL = 'https://prod-48.westus.logic.azure.com:443/workflows/422eff426bf446beb5e4779f6da59075/triggers/manual/paths/invoke?api-version=2016-06-01';
-        
-        // Modo depuración (cambiar a true para activar)
-        const DEBUG_MODE = false;
-        
-        // Frases para el indicador de "pensando"
+
+        // --- URL completa y correcta del flujo de Power Automate ---
+        const POWER_AUTOMATE_FLOW_URL = 'https://prod-48.westus.logic.azure.com:443/workflows/422eff426bf446beb5e4779f6da59075/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jywG9ryTgzuN1LxQrRY0r87j6Wioqjtug5bNnqLbQT8';
+
+        // --- Frases para el indicador de "pensando" ---
         const thinkingMessages = [
             "Sabías que capacitamos a más de 5000 personas en Chile.",
             "Sabías que tenemos más de 10 años de experiencia en capacitación B2B.",
@@ -197,22 +175,6 @@
             "Pensando en la mejor respuesta para tu empresa..."
         ];
 
-        // Función para mostrar información de depuración
-        function debug(message, data = null) {
-            if (!DEBUG_MODE) return;
-            
-            const timestamp = new Date().toLocaleTimeString();
-            let html = `<div><strong>${timestamp}</strong>: ${message}</div>`;
-            
-            if (data) {
-                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            }
-            
-            debugInfo.innerHTML += html;
-            debugInfo.scrollTop = debugInfo.scrollHeight;
-            debugInfo.style.display = 'block';
-        }
-        
         // Función para agregar un mensaje al área de chat
         function addMessage(sender, text) {
             const messageElement = document.createElement('div');
@@ -245,11 +207,10 @@
                 return;
             }
 
-            // Mostrar el mensaje del usuario
+            // --- 1. Mostrar el mensaje del usuario ---
             addMessage('user', userMessage);
-            debug("Mensaje enviado por usuario", userMessage);
 
-            // Preparar la interfaz para esperar la respuesta
+            // --- 2. Preparar la interfaz para esperar la respuesta ---
             userInput.value = '';
             sendButton.disabled = true;
             
@@ -259,17 +220,13 @@
             loadingContainer.style.display = 'block';
 
             try {
-                // Preparar el cuerpo de la solicitud exactamente como lo espera Power Automate
+                // --- 3. Enviar el mensaje a Power Automate con la URL COMPLETA ---
                 const requestBody = {
                     message: userMessage
                 };
 
-                debug("Enviando solicitud a Power Automate", {
-                    url: POWER_AUTOMATE_FLOW_URL,
-                    body: requestBody
-                });
+                console.log("Enviando solicitud a:", POWER_AUTOMATE_FLOW_URL);
                 
-                // Realizar la solicitud a Power Automate
                 const response = await fetch(POWER_AUTOMATE_FLOW_URL, {
                     method: 'POST',
                     headers: {
@@ -277,90 +234,85 @@
                     },
                     body: JSON.stringify(requestBody)
                 });
-                
-                debug("Respuesta recibida", {
-                    status: response.status,
-                    statusText: response.statusText
-                });
 
-                // Procesar la respuesta
+                console.log("Respuesta recibida. Status:", response.status);
+                
+                // --- 4. Procesar la respuesta de Power Automate ---
                 if (response.ok) {
-                    // Intentar obtener la respuesta como texto
-                    const responseText = await response.text();
-                    debug("Cuerpo de la respuesta", responseText);
+                    let aiResponseText;
                     
-                    // Intentar parsear como JSON si parece ser JSON
-                    let aiResponseText = responseText;
-                    if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
-                        try {
-                            const jsonResponse = JSON.parse(responseText);
-                            // Si el JSON contiene una propiedad de respuesta, usarla
-                            if (jsonResponse.message || jsonResponse.response || jsonResponse.text) {
-                                aiResponseText = jsonResponse.message || jsonResponse.response || jsonResponse.text;
-                            }
-                        } catch (e) {
-                            debug("Error al parsear JSON", e);
-                            // Si falla el parsing, usar el texto original
+                    // Intentar procesar como JSON primero
+                    try {
+                        const jsonResponse = await response.json();
+                        console.log("Respuesta JSON:", jsonResponse);
+                        
+                        // Extraer el mensaje del JSON si existe
+                        if (typeof jsonResponse === 'object') {
+                            aiResponseText = jsonResponse.message || jsonResponse.response || jsonResponse.text || JSON.stringify(jsonResponse);
+                        } else {
+                            aiResponseText = String(jsonResponse);
                         }
+                    } catch (e) {
+                        // Si no es JSON, tratar como texto
+                        aiResponseText = await response.text();
+                        console.log("Respuesta texto:", aiResponseText);
                     }
                     
-                    // Mostrar la respuesta
+                    // --- 5. Mostrar la respuesta del AI ---
                     addMessage('ai', aiResponseText);
                 } else {
-                    // Manejar errores HTTP
-                    let errorDetails = "";
+                    // Si la respuesta no fue exitosa
+                    console.error("Error HTTP:", response.status, response.statusText);
+                    
+                    // Intentar leer el cuerpo del error
+                    let errorText = "";
                     try {
-                        const errorText = await response.text();
-                        debug("Texto del error", errorText);
-                        errorDetails = errorText;
+                        errorText = await response.text();
+                        console.error("Cuerpo del error:", errorText);
                     } catch (e) {
-                        debug("No se pudo leer el texto del error", e);
+                        console.error("No se pudo leer el cuerpo del error:", e);
                     }
                     
-                    // Mensajes de error específicos según el código de estado
+                    // Mensajes de error específicos
                     let errorMessage;
                     switch(response.status) {
                         case 401:
-                            errorMessage = "Error de autenticación al conectar con el servicio. Verifica la URL del flujo o si requiere autenticación.";
+                            errorMessage = "Error de autenticación. Por favor, verifica que la URL del flujo sea correcta y esté actualizada.";
                             break;
                         case 403:
-                            errorMessage = "No se tiene permiso para acceder al servicio.";
+                            errorMessage = "No tienes permiso para acceder a este servicio.";
                             break;
                         case 404:
-                            errorMessage = "No se encontró el servicio en la URL proporcionada. Verifica que la URL del flujo sea correcta.";
+                            errorMessage = "El servicio no se encuentra. Verifica la URL del flujo.";
                             break;
                         case 429:
-                            errorMessage = "Demasiadas solicitudes al servicio. Intenta más tarde.";
+                            errorMessage = "Demasiadas solicitudes. Por favor intenta más tarde.";
+                            break;
+                        case 500:
+                        case 502:
+                        case 503:
+                        case 504:
+                            errorMessage = "El servicio está experimentando problemas. Intenta más tarde.";
                             break;
                         default:
-                            errorMessage = `Error de conexión (${response.status}): No se pudo procesar tu mensaje.`;
+                            errorMessage = `Error (${response.status}): No se pudo procesar tu mensaje.`;
                     }
                     
                     addMessage('ai', errorMessage);
-                    
-                    if (DEBUG_MODE) {
-                        addMessage('ai', `Detalles técnicos: ${errorDetails}`);
-                    }
                 }
             } catch (error) {
-                // Manejar errores de red u otros
-                debug("Error en la llamada fetch", error);
-                
-                const errorMessage = "No se pudo conectar con el servicio. Verifica tu conexión a internet y que la URL del flujo sea correcta.";
-                addMessage('ai', errorMessage);
-                
-                if (DEBUG_MODE) {
-                    addMessage('ai', `Error técnico: ${error.message}`);
-                }
+                // --- 6. Manejar errores de red u otros ---
+                console.error("Error en la conexión:", error);
+                addMessage('ai', "Ocurrió un error de conexión. Verifica tu conexión a internet.");
             } finally {
-                // Restablecer la interfaz
+                // --- 7. Restablecer la interfaz ---
                 loadingContainer.style.display = 'none';
                 sendButton.disabled = false;
                 userInput.focus();
             }
         }
 
-        // Asignar Eventos
+        // --- Asignar Eventos ---
         sendButton.addEventListener('click', sendMessage);
 
         userInput.addEventListener('keypress', function(event) {
@@ -370,21 +322,9 @@
             }
         });
 
-        // Mostrar el panel de depuración con tecla especial
-        document.addEventListener('keydown', function(event) {
-            // Alt+D para mostrar/ocultar panel de depuración
-            if (event.altKey && event.key === 'd') {
-                debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
-            }
-        });
-
-        // Inicialización
+        // Establecer el foco en el input al cargar la página
         window.addEventListener('load', () => {
             userInput.focus();
-            debug("Aplicación iniciada", {
-                url: POWER_AUTOMATE_FLOW_URL,
-                debug: DEBUG_MODE
-            });
         });
     </script>
 </body>
