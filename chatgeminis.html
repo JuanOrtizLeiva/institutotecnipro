@@ -4,26 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asesor Virtual Instituto Tecnipro</title>
-    <!-- Añadimos Font Awesome para iconos profesionales -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* --- Estilos Profesionales Mejorados --- */
         :root {
-            --primary-color: #0056b3;
+            --primary-color: #0056b3; /* Azul Tecnipro */
             --primary-color-hover: #004494;
-            --accent-color: #28a745;
+            --accent-color: #28a745; /* Verde, para botones de acción */
             --accent-color-hover: #218838;
-            --light-bg: #f8f9fa;
-            --chat-bg: #e9ebee;
-            --user-bubble: #0072ce;
-            --ai-bubble: #f0f0f0;
-            --text-dark: #333333;
-            --text-light: #ffffff;
-            --border-color: #dee2e6;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --radius-sm: 8px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
+            --light-bg: #f8f9fa; /* Fondo muy claro */
+            --chat-bg: #e9ebee; /* Fondo del área de mensajes */
+            --user-bubble: #0072ce; /* Burbuja de usuario (azul) */
+            --ai-bubble: #f0f0f0; /* Burbuja de AI (gris claro) */
+            --text-dark: #333333; /* Texto oscuro principal */
+            --text-light: #ffffff; /* Texto claro (sobre fondos oscuros) */
+            --border-color: #dee2e6; /* Color general de bordes */
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra general */
+            --radius-sm: 8px; /* Radio pequeño */
+            --radius-md: 16px; /* Radio medio */
+            --radius-lg: 24px; /* Radio grande */
+
+            /* Colores para carga */
+            --loading-bg-overlay: rgba(255, 255, 255, 0.7); /* Fondo blanco más transparente */
+            --loading-box-bg: #ffffff; /* Fondo blanco para la caja */
+            --loading-box-border: #cccccc; /* Borde gris claro */
+            --loading-text-color: #555555; /* Texto gris oscuro */
+            --loading-dot-color: var(--primary-color); /* Color del punto de carga (ej: azul principal) */
         }
 
         * {
@@ -55,7 +61,7 @@
             overflow: hidden;
             box-shadow: var(--shadow);
             background-color: #ffffff;
-            position: relative; /* Para posicionar elementos absolutos */
+            position: relative; /* Necesario para que el loading-container absoluto se posicione relativo a este */
         }
 
         #chat-header {
@@ -83,6 +89,7 @@
             display: flex;
             flex-direction: column;
             scroll-behavior: smooth;
+            white-space: pre-wrap; /* Respeta saltos de línea */
         }
 
         .message {
@@ -123,19 +130,52 @@
             font-size: 0.9em;
         }
 
+        /* --- Estilos para la Ventana Flotante de Carga (Overlay) con Fade --- */
         #loading-container {
-            padding: 15px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-top: 1px solid var(--border-color);
-            display: none;
-            align-items: center;
+            position: absolute; /* Posicionamiento absoluto dentro de #chat-container */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%; /* Cubre todo el área del chat */
+            background-color: var(--loading-bg-overlay); /* Fondo semi-transparente */
+            display: flex; /* Se activa a 'flex' en JS para mostrar */
+            flex-direction: column;
             justify-content: center;
+            align-items: center;
+            z-index: 10; /* Asegura que esté por encima del chat-output */
+
+            /* Propiedades para el efecto fade */
+            opacity: 0; /* Inicialmente invisible */
+            visibility: hidden; /* Inicialmente oculto para interacciones */
+            transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s; /* Animar opacidad, cambiar visibilidad DESPUÉS de la animación */
+        }
+
+         /* Clase que se añade con JS para mostrar y animar la entrada */
+        #loading-container.loading-visible {
+            opacity: 1; /* Completamente visible */
+            visibility: visible; /* Visible para interacciones */
+            transition-delay: 0s; /* Asegura que la animación de entrada no tenga retraso */
+        }
+
+
+        #loading-content {
+            background-color: var(--loading-box-bg); /* Fondo blanco para la caja */
+            border: 1px solid var(--loading-box-border); /* Borde gris claro */
+            color: var(--loading-text-color); /* Texto gris oscuro */
+            padding: 20px 30px; /* Espaciado interno */
+            border-radius: 10px; /* Bordes redondeados */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Sombra */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
         #loading-animation {
+             /* Mantener estilos existentes, se centran por el padre #loading-content */
             display: flex;
             align-items: center;
-            margin-right: 15px;
+            margin-bottom: 10px; /* Espacio entre animación y texto */
         }
 
         .typing-indicator {
@@ -146,8 +186,8 @@
         .typing-dot {
             width: 8px;
             height: 8px;
-            margin: 0 2px;
-            background-color: var(--primary-color);
+            margin: 0 3px; /* Ajuste de espacio entre puntos */
+            background-color: var(--loading-dot-color); /* Color del punto de carga */
             border-radius: 50%;
             animation: typingAnimation 1.4s infinite ease-in-out;
         }
@@ -158,15 +198,16 @@
 
         @keyframes typingAnimation {
             0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-8px); }
+            30% { transform: translateY(-6px); } /* Ajuste para que el salto sea menos pronunciado si se prefiere */
         }
 
         #loading-text {
             font-style: italic;
-            color: var(--text-dark);
-            font-size: 0.95em;
+            color: var(--loading-text-color); /* Hereda del padre, pero lo ponemos explícito */
+            font-size: 1em; /* Tamaño de fuente */
         }
 
+        /* --- Estilos para el Área de Input --- */
         #chat-input-area {
             display: flex;
             padding: 16px;
@@ -286,16 +327,19 @@
         <div id="chat-output">
             <div class="message ai-message"><strong>Asesor:</strong> ¡Hola! Soy el asistente de capacitación de Instituto Tecnipro. Puedo ayudarte a encontrar la mejor solución de formación para tu empresa. ¿En qué área específica necesitas capacitar a tu equipo?</div>
         </div>
-        <div id="loading-container">
-            <div id="loading-animation">
-                <div class="typing-indicator">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
+
+        <div id="loading-container" style="display: none;"> <div id="loading-content">
+                <div id="loading-animation">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
                 </div>
+                <div id="loading-text">Preparando información para ti...</div>
             </div>
-            <div id="loading-text">Preparando información para ti...</div>
         </div>
+
         <div id="chat-input-area">
             <input type="text" id="user-input" placeholder="Escribe tu consulta sobre capacitaciones...">
             <button id="send-button">
@@ -310,13 +354,40 @@
         const userInput = document.getElementById('user-input');
         const sendButton = document.getElementById('send-button');
         const chatOutput = document.getElementById('chat-output');
-        const loadingContainer = document.getElementById('loading-container');
-        const loadingText = document.getElementById('loading-text');
+        const loadingContainer = document.getElementById('loading-container'); // Referencia al div de carga (ahora flotante)
+        const loadingText = document.getElementById('loading-text'); // Referencia al texto dentro del div de carga
 
-        // URL del flujo de Power Automate
-        const POWER_AUTOMATE_FLOW_URL = 'https://prod-48.westus.logic.azure.com:443/workflows/422eff426bf446beb5e4779f6da59075/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jywG9ryTgzuN1LxQrRY0r87j6Wioqjtug5bNnqLbQT8';
 
-        // Mensajes informativos durante la espera - orientados a encargados de capacitación
+        // URL del flujo de Power Automate (URL completa con SAS token)
+        const POWER_AUTOMATE_FLOW_URL = 'https://prod-48.westus.logic.azure.com:443/workflows/422eff426bf446beb5e4779f6da59075/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=jywG9ryTgzuN1LxQrRY0r87j6Wioqjtug5bNnqLbQT8'; // <-- ¡VERIFICA QUE ESTA SEA TU URL CORRECTA!
+
+        // Variable para almacenar el ID de la conversación
+        let currentConversationId = null;
+
+        // Función para generar un ID único (UUID v4 simple)
+        function generateUUID() {
+            // Nota: Esta es una implementación simple, no criptográficamente segura
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Función para obtener o crear el ID de conversación usando sessionStorage
+        // sessionStorage dura mientras la pestaña o ventana del navegador esté abierta.
+        function getOrCreateConversationId() {
+            const storedId = sessionStorage.getItem('conversationId');
+            if (storedId) {
+                return storedId;
+            } else {
+                const newId = generateUUID();
+                sessionStorage.setItem('conversationId', newId);
+                return newId;
+            }
+        }
+
+        // --- Mensajes informativos rotativos durante la espera - orientados a encargados de capacitación ---
         const thinkingMessages = [
             "¿Sabías que nuestras capacitaciones incluyen certificación y respaldo académico?",
             "Contamos con más de 10 años formando profesionales en las principales empresas de Chile",
@@ -330,146 +401,194 @@
             "Te asesoramos en todo el proceso administrativo con SENCE y OTIC"
         ];
 
-        // Función para añadir un mensaje al chat
+       // Función para añadir un mensaje al chat e interpretar Markdown básico
         function addMessage(sender, text) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message');
-            
+
+            // 1. Escapar HTML (prevención básica de seguridad)
+            let processedText = escapeHTML(text);
+
+            // 2. Interpretar Markdown básico: Negrita (**) y Listas (*)
+            // Reemplazar negritas: **texto** -> <b>texto</b>
+            processedText = processedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+            // Reemplazar inicios de lista con viñeta simple (* ) a algo con formato
+            // Esto es una aproximación. Un parser de Markdown completo sería mejor para estructuras complejas.
+            // Busca líneas que empiezan con * (permitiendo espacios antes) y les da un formato básico con punto.
+            const lines = processedText.split('\n');
+            let formattedLines = lines.map(line => {
+                 if (line.trimStart().startsWith('* ')) {
+                     // Reemplaza el '* ' inicial (después de quitar espacios iniciales) con un punto y espacio
+                     return '• ' + line.trimStart().substring(2);
+                 }
+                 return line; // Deja la línea sin cambios
+            });
+
+            processedText = formattedLines.join('\n'); // Unir las líneas de nuevo
+
+
             if (sender === 'user') {
                 messageElement.classList.add('user-message');
-                messageElement.innerHTML = `<strong>Tú:</strong> ${escapeHTML(text)}`;
-            } else {
+                // Usamos innerHTML porque processedText ahora puede contener etiquetas HTML (<b>) o símbolos (•)
+                messageElement.innerHTML = `<strong>Tú:</strong> ${processedText}`;
+            } else { // sender === 'ai'
                 messageElement.classList.add('ai-message');
-                messageElement.innerHTML = `<strong>Asesor:</strong> ${escapeHTML(text)}`;
+                 // Usamos innerHTML porque processedText ahora puede contener etiquetas HTML (<b>) o símbolos (•)
+                messageElement.innerHTML = `<strong>Asesor:</strong> ${processedText}`;
             }
-            
+
             chatOutput.appendChild(messageElement);
-            chatOutput.scrollTop = chatOutput.scrollHeight;
+            chatOutput.scrollTop = chatOutput.scrollHeight; // Scroll al final
         }
 
-        // Función para escapar HTML y prevenir inyecciones
+        // Asegúrate de que la función escapeHTML exista, como en tu código anterior:
         function escapeHTML(str) {
             const div = document.createElement('div');
             div.appendChild(document.createTextNode(str));
             return div.innerHTML;
         }
 
+
         // Función para mostrar mensajes informativos rotativos durante la carga
         let tipInterval;
         function startRotatingTips() {
             let tipIndex = Math.floor(Math.random() * thinkingMessages.length);
             loadingText.textContent = thinkingMessages[tipIndex];
-            
+
             tipInterval = setInterval(() => {
                 tipIndex = (tipIndex + 1) % thinkingMessages.length;
                 loadingText.textContent = thinkingMessages[tipIndex];
-            }, 5000);
+            }, 5000); // Cambia la frase cada 5 segundos
         }
 
         function stopRotatingTips() {
             clearInterval(tipInterval);
         }
 
-        // Función para enviar el mensaje
+        // Función principal para enviar el mensaje y manejar la respuesta
         async function sendMessage() {
             const userMessage = userInput.value.trim();
 
-            if (!userMessage) {
+            if (!userMessage) { // No enviar mensajes vacíos
                 return;
             }
 
-            // Mostrar el mensaje del usuario
+            // 1. Mostrar el mensaje del usuario
             addMessage('user', userMessage);
 
-            // Preparar la interfaz para esperar la respuesta
-            userInput.value = '';
-            sendButton.disabled = true;
-            
-            // Mostrar animación de carga con mensajes informativos rotativos
-            loadingContainer.style.display = 'flex';
-            startRotatingTips();
+            // 2. Preparar la interfaz para esperar la respuesta (Mostrar overlay de carga con fade-in)
+            loadingContainer.style.display = 'flex'; // Haz que ocupe espacio (instantáneo)
+            // Fuerza un reflow para asegurar que el navegador reconozca display: flex antes de aplicar la transición
+            // void loadingContainer.offsetWidth; // Descomenta esta línea si el fade-in no funciona en algunos navegadores
+            loadingContainer.classList.add('loading-visible'); // Añade clase para animar opacidad a 1 y visibilidad a visible
+
+            userInput.value = ''; // Limpiar input
+            sendButton.disabled = true; // Deshabilitar botón
+            startRotatingTips(); // Iniciar rotación de mensajes
+
+            // Asegurarse de tener un ID de conversación
+            if (!currentConversationId) {
+                currentConversationId = getOrCreateConversationId();
+                console.log("Usando ConversationID:", currentConversationId); // Para depuración
+            }
+
 
             try {
-                // Enviar el mensaje a Power Automate
+                // 3. Enviar el mensaje a Power Automate con el ConversationID
                 const requestBody = {
-                    message: userMessage
+                    message: userMessage, // El texto del mensaje
+                    conversationId: currentConversationId // <-- ¡AGREGAMOS el ID de conversación aquí!
                 };
 
-                console.log("Enviando solicitud a:", POWER_AUTOMATE_FLOW_URL);
-                
+                console.log("Enviando solicitud a:", POWER_AUTOMATE_FLOW_URL, "con Body:", requestBody); // Log para depuración
+
                 const response = await fetch(POWER_AUTOMATE_FLOW_URL, {
-                    method: 'POST',
+                    method: 'POST', // Método POST es necesario para el desencadenador de Power Automate
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json' // Indicar que el cuerpo de la solicitud es JSON
                     },
-                    body: JSON.stringify(requestBody)
+                    body: JSON.stringify(requestBody) // Convertir el objeto JavaScript a una cadena JSON
                 });
 
-                console.log("Respuesta recibida. Status:", response.status);
-                
-                // Procesar la respuesta
+                console.log("Respuesta recibida. Status:", response.status); // Log del estado de la respuesta
+
+                // 4. Procesar la respuesta de Power Automate (espera texto plano)
                 if (response.ok) {
-                    let aiResponseText;
-                    
-                    // Intentar procesar como JSON primero
-                    try {
-                        const jsonResponse = await response.json();
-                        console.log("Respuesta JSON:", jsonResponse);
-                        
-                        // Extraer el mensaje del JSON si existe
-                        if (typeof jsonResponse === 'object') {
-                            aiResponseText = jsonResponse.message || jsonResponse.response || jsonResponse.text || JSON.stringify(jsonResponse);
-                        } else {
-                            aiResponseText = String(jsonResponse);
-                        }
-                    } catch (e) {
-                        // Si no es JSON, tratar como texto
-                        aiResponseText = await response.text();
-                        console.log("Respuesta texto:", aiResponseText);
-                    }
-                    
-                    // Mostrar la respuesta del asesor
+                    // Power Automate debe devolver SOLO texto plano con la respuesta del AI.
+                    // Leemos el cuerpo de la respuesta como texto.
+                    const aiResponseText = await response.text();
+
+                    // 5. Mostrar la respuesta del AI
                     addMessage('ai', aiResponseText);
+
                 } else {
-                    // Manejar errores HTTP
-                    console.error("Error HTTP:", response.status, response.statusText);
-                    
+                    // Manejar errores HTTP (códigos no-2xx)
+                    console.error("Error HTTP:", response.status, response.statusText); // Log del error
+
+                    // Intentar leer el cuerpo del error para obtener más detalles
+                    let errorText = "";
+                    try {
+                        errorText = await response.text();
+                        console.error("Cuerpo del error:", errorText); // Log del cuerpo del error
+                    } catch (e) {
+                        console.error("No se pudo leer el cuerpo del error:", e);
+                    }
+
+                    // Mostrar un mensaje de error amigable al usuario basado en el código de estado
                     let errorMessage;
                     switch(response.status) {
-                        case 401:
-                            errorMessage = "Lo sentimos, hubo un problema de autenticación con nuestro servicio.";
-                            break;
-                        case 403:
-                            errorMessage = "No se tiene permiso para acceder a este servicio.";
-                            break;
-                        case 404:
-                            errorMessage = "No se encontró el servicio. Por favor, intente más tarde.";
-                            break;
-                        case 429:
-                            errorMessage = "Estamos experimentando un alto volumen de consultas. Por favor, intente nuevamente en unos momentos.";
-                            break;
+                        case 400: errorMessage = "Solicitud incorrecta."; break;
+                        case 401: errorMessage = `Error de autenticación del servicio (${response.status}). Verifica la URL del flujo.`; break; // Podría ser el SAS token
+                        case 403: errorMessage = `Permiso denegado por el servicio (${response.status}).`; break;
+                        case 404: errorMessage = `Servicio no encontrado (${response.status}). Verifica la URL del flujo.`; break;
+                        case 429: errorMessage = `Estamos experimentando un alto volumen de consultas. Por favor, intente nuevamente en unos momentos. (${response.status})`; break;
                         case 500: case 502: case 503: case 504:
-                            errorMessage = "Nuestro servicio está experimentando dificultades técnicas. Por favor, intente más tarde o contáctenos directamente.";
-                            break;
+                            errorMessage = `Nuestro servicio está experimentando dificultades técnicas. Por favor, intente más tarde o contáctenos directamente. (${response.status})`; break;
                         default:
-                            errorMessage = "Hubo un problema al procesar su solicitud. Por favor, intente nuevamente.";
-                    }
-                    
-                    addMessage('ai', errorMessage);
+                            errorMessage = `Error inesperado del servicio (${response.status}).`;
+                     }
+
+                    // Mostrar mensaje detallado si el cuerpo del error contiene info útil
+                    let detailedErrorMessage = errorMessage;
+                     if (errorText) {
+                         try {
+                              const errorJson = JSON.parse(errorText);
+                              detailedErrorMessage = errorJson.message || errorJson.error?.message || `Respuesta de error: ${errorText.substring(0, 100)}...`;
+                         } catch(e) {
+                              detailedErrorMessage = `${errorMessage} Detalles: ${errorText.substring(0, 150)}${errorText.length > 150 ? '...' : ''}`;
+                         }
+                     }
+
+                    addMessage('ai', detailedErrorMessage);
+
                 }
             } catch (error) {
-                console.error("Error en la conexión:", error);
+                // Este bloque catch maneja errores de RED pura
+                console.error("Error en la conexión de red:", error);
                 addMessage('ai', "Lo sentimos, no pudimos conectar con nuestro servicio. Verifique su conexión a internet o contáctenos directamente por teléfono.");
             } finally {
-                // Restablecer la interfaz
+                // Código que se ejecuta siempre al final (éxito o error)
+                // Ocultar el overlay de carga con fade-out después de un breve retraso
+                loadingContainer.classList.remove('loading-visible'); // Inicia fade-out
+                setTimeout(() => {
+                    loadingContainer.style.display = 'none'; // Oculta completamente después de la transición
+                    // loadingContainer.style.visibility = 'hidden'; // También podrías usar esto
+                }, 300); // El retraso (300ms) debe coincidir con la duración de la transición CSS
+
                 stopRotatingTips();
-                loadingContainer.style.display = 'none';
                 sendButton.disabled = false;
                 userInput.focus();
             }
         }
 
-        // Eventos
+        // --- Inicialización ---
+        // Obtener o crear el ID de conversación cuando el script se carga por primera vez
+        currentConversationId = getOrCreateConversationId();
+        console.log("Iniciando chat con ConversationID:", currentConversationId); // Para depuración inicial
+
+
+        // --- Event Listeners (Manejo de Eventos) ---
         sendButton.addEventListener('click', sendMessage);
 
         userInput.addEventListener('keypress', function(event) {
@@ -479,10 +598,12 @@
             }
         });
 
-        // Inicialización
-        window.addEventListener('load', () => {
-            userInput.focus();
-        });
+        // Poner el foco en el campo de input al cargar la página
+         window.addEventListener('load', () => {
+             userInput.focus();
+         });
+
+
     </script>
 </body>
 </html>
